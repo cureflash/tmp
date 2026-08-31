@@ -1,4 +1,4 @@
-name: Collect Wayback images
+name: .github/workflows/collect-wayback-images.yml
 
 on:
   push:
