@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>光るモールス信号ツリー</title>
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#050b10;
+  --panel:#0b1e2b;
+  --text:#edf8ff;
+  --muted:#93a8b7;
+  --line:#91a9b8;
+  --dot:#142732;
+  --dash:#142732;
+  --on:#37f58a;
+  --on2:#cbffe0;
+  --dash-on:#ff3b30;
+  --dash-on2:#ffd0cc;
+  --root:#e7f7ff;
+}
+*{box-sizing:border-box}
+html,body{
+  margin:0;width:100%;height:100%;overflow:hidden;
+  background:#020507;color:var(--text);
+  font-family:system-ui,-apple-system,"Segoe UI",sans-serif
+}
+body{
+  height:100dvh;display:flex;justify-content:center;
+  padding:max(5px,env(safe-area-inset-top)) 7px max(5px,env(safe-area-inset-bottom));
+}
+.app{
+  width:min(720px,100%);
+  height:100%;
+  min-height:0;
+  display:grid;
+  grid-template-rows:minmax(0,1fr) auto auto;
+  gap:6px
+}
+.card{
+  position:relative;overflow:hidden;min-height:0;height:100%;
+  border:2px solid #7691a2;border-radius:15px;
+  background:linear-gradient(180deg,#0b2638 0,#071b29 100%);
+  box-shadow:inset 0 0 45px rgba(255,255,255,.035),0 12px 30px rgba(0,0,0,.35)
+}
+.card-title{
+  position:absolute;left:0;right:0;top:5px;text-align:center;
+  font-size:clamp(12px,3.3vw,20px);letter-spacing:.16em;color:#b8cad6;
+  pointer-events:none
+}
+svg{width:100%;height:100%;display:block}
+.edge{stroke:var(--line);stroke-width:4;fill:none;stroke-linecap:round;stroke-linejoin:round;opacity:.86}
+.edge.active{stroke:var(--on);stroke-width:7;filter:drop-shadow(0 0 7px var(--on))}
+.edge.active.dash-active{stroke:var(--dash-on);filter:drop-shadow(0 0 7px var(--dash-on))}
+.dot-shape{fill:var(--dot);stroke:#aec3cf;stroke-width:3}
+.dash-shape{fill:var(--dash);stroke:#aec3cf;stroke-width:3}
+.node text{fill:#d2e0e8;font-size:23px;font-weight:500;user-select:none}
+.node.active .dot-shape{
+  fill:var(--on);stroke:var(--on2);filter:drop-shadow(0 0 8px var(--on))
+}
+.node.active .dash-shape{
+  fill:var(--dash-on);stroke:var(--dash-on2);filter:drop-shadow(0 0 8px var(--dash-on))
+}
+.node.current .dot-shape{
+  fill:var(--on);stroke:#fff;stroke-width:4;filter:drop-shadow(0 0 11px var(--on))
+}
+.node.current .dash-shape{
+  fill:var(--dash-on);stroke:#fff;stroke-width:4;filter:drop-shadow(0 0 11px var(--dash-on))
+}
+.root-mark{stroke:#c5d8e2;fill:none;stroke-width:4}
+.root-mark.active{stroke:var(--on);filter:drop-shadow(0 0 7px var(--on))}
+.auto-input{
+  display:grid;grid-template-columns:1fr auto;gap:8px;
+  padding:5px;border:1px solid #294a5d;border-radius:11px;background:#081722
+}
+.auto-input input{
+  min-width:0;height:38px;border-radius:9px;border:1px solid #345c70;
+  background:#06111a;color:#eef8ff;padding:0 10px;font-size:16px;text-transform:uppercase
+}
+.auto-input button{
+  height:38px;padding:0 12px;border-radius:9px;border:1px solid #345c70;
+  background:#123449;color:#fff;font-weight:750;cursor:pointer
+}
+.auto-input button:disabled{opacity:.45;cursor:not-allowed}
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.key{
+  height:56px;border-radius:13px;border:1px solid #345c70;
+  background:linear-gradient(#183a4e,#0d2635);color:white;
+  font-size:26px;font-weight:850;cursor:pointer;-webkit-tap-highlight-color:transparent
+}
+.key small{display:block;font-size:10px;color:#a4bdcb;margin-top:0}
+.key:active,.key.pressed{background:#1b4c60;transform:translateY(1px)}
+.bad{animation:bad .18s 2}
+@keyframes bad{50%{box-shadow:inset 0 0 55px rgba(255,80,100,.28)}}
+@media(max-width:520px){
+  body{
+    padding:max(4px,env(safe-area-inset-top)) 5px max(4px,env(safe-area-inset-bottom))
+  }
+  .app{gap:4px}
+    .auto-input{padding:4px}
+}
+
+@media(max-height:740px){
+              .auto-input input,.auto-input button{height:34px}
+  .key{height:48px;font-size:23px}
+    }
+
+@media(max-height:620px){
+  header           .auto-input input,.auto-input button{height:31px}
+  .key{height:42px}
+  .key small{display:none}
+      .app{grid-template-rows:minmax(0,1fr) auto auto}
+}
+</style>
+</head>
+<body>
+<main class="app">
+<section id="card" class="card">
+    <div class="card-title">MORSE&nbsp;&nbsp;&nbsp; CODE</div>
+    <svg id="tree" viewBox="0 0 720 960" aria-label="モールス信号カード"></svg>
+  </section>
+
+  <section class="auto-input">
+    <input id="textInput" type="text" inputmode="text" autocomplete="off"
+           placeholder="例: SOS" aria-label="自動入力するアルファベット">
+    <button id="autoBtn" type="button">自動入力</button>
+  </section>
+
+  <section class="controls">
+    <button id="dotBtn" class="key" type="button">・<small>トン / DOT</small></button>
+    <button id="dashBtn" class="key" type="button">－<small>ツー / DASH</small></button>
+  </section>
+</main>
+
+<script>
+const MORSE = {
+  "":"START",
+  ".":"E","-":"T",
+  "..":"I",".-":"A","-.":"N","--":"M",
+  "...":"S","..-":"U",".-.":"R",".--":"W",
+  "-..":"D","-.-":"K","--.":"G","---":"O",
+  "....":"H","...-":"V","..-.":"F",
+  ".-..":"L",".--.":"P",".---":"J",
+  "-...":"B","-..-":"X","-.-.":"C","-.--":"Y",
+  "--..":"Z","--.-":"Q"
+};
+
+/* 実物カードと同じ配置。circle=短点、square=長点 */
+const NODES = {
+  "":     {x:360,y:130,root:true},
+  "---":  {x: 90,y:190,t:"dash",lx: 90,ly:145},
+  "--":   {x:190,y:190,t:"dash",lx:190,ly:145},
+  "-":    {x:290,y:190,t:"dash",lx:290,ly:145},
+  ".":    {x:430,y:190,t:"dot", lx:430,ly:145},
+  "..":   {x:520,y:190,t:"dot", lx:520,ly:145},
+  "...":  {x:610,y:190,t:"dot", lx:610,ly:145},
+  "....": {x:690,y:190,t:"dot", lx:690,ly:145},
+
+  "--.-": {x: 90,y:330,t:"dash",lx: 72,ly:385},
+  "--.":  {x:190,y:330,t:"dot", lx:235,ly:340},
+  "--..": {x:190,y:455,t:"dot", lx:235,ly:465},
+
+  "..-":  {x:520,y:330,t:"dash",lx:475,ly:340},
+  "...-": {x:610,y:330,t:"dash",lx:655,ly:340},
+  "..-.": {x:520,y:455,t:"dot", lx:565,ly:465},
+
+  "-.--": {x: 90,y:560,t:"dash",lx: 72,ly:525},
+  "-.-":  {x:190,y:560,t:"dash",lx:190,ly:515},
+  "-.":   {x:290,y:560,t:"dot", lx:335,ly:550},
+  ".-":   {x:430,y:560,t:"dash",lx:385,ly:610},
+  ".-.":  {x:520,y:560,t:"dot", lx:520,ly:615},
+  ".-..": {x:610,y:560,t:"dot", lx:655,ly:570},
+
+  "-.-.": {x:190,y:690,t:"dot", lx:235,ly:680},
+  "-..":  {x:290,y:790,t:"dot", lx:335,ly:780},
+  "-..-": {x:190,y:790,t:"dash",lx:145,ly:805},
+  "-...": {x:290,y:900,t:"dot", lx:245,ly:910},
+
+  ".--":  {x:430,y:790,t:"dash",lx:385,ly:815},
+  ".--.": {x:520,y:790,t:"dot", lx:565,ly:800},
+  ".---": {x:430,y:900,t:"dash",lx:475,ly:910}
+};
+
+const EDGES = [
+  ["","-"],["-","--"],["--","---"],
+  ["--","--."],["--.","--.-"],["--.","--.."],
+  ["-","-."],["-.","-.-"],["-.-","-.--"],["-.-","-.-."],
+  ["-.","-.."],["-..","-..-"],["-..","-..."],
+
+  ["","."],[".",".."],["..","..."],["...","...."],
+  ["..","..-"],["..-","..-."],["...","...-"],
+  [".",".-"],[".-",".-."],[".-.",".-.."],
+  [".-",".--"],[".--",".--."],[".--",".---"]
+];
+
+let sequence = "";
+let resetTimer = null;
+let audioCtx = null;
+
+const svg = document.getElementById("tree");
+const dotBtn = document.getElementById("dotBtn");
+const dashBtn = document.getElementById("dashBtn");
+const textInput = document.getElementById("textInput");
+const autoBtn = document.getElementById("autoBtn");
+const card = document.getElementById("card");
+const NS = "http://www.w3.org/2000/svg";
+
+let autoPlaying = false;
+
+
+function pointToward(a,b,pad=24){
+  const dx=b.x-a.x, dy=b.y-a.y;
+  const len=Math.hypot(dx,dy)||1;
+  return {x:a.x+dx/len*pad,y:a.y+dy/len*pad};
+}
+function edgePath(from,to){
+  const a=NODES[from], b=NODES[to];
+  const s=pointToward(a,b,from===""?28:25);
+  const e=pointToward(b,a,25);
+  return `M ${s.x} ${s.y} L ${e.x} ${e.y}`;
+}
+
+function draw(){
+  svg.replaceChildren();
+
+  const edges=document.createElementNS(NS,"g");
+  for(const [from,to] of EDGES){
+    const p=document.createElementNS(NS,"path");
+    p.setAttribute("d",edgePath(from,to));
+    p.setAttribute("class","edge");
+    p.dataset.from=from;
+    p.dataset.to=to;
+    edges.appendChild(p);
+  }
+  svg.appendChild(edges);
+
+  /* アンテナ風スタートマーク */
+  const root=NODES[""];
+  const rg=document.createElementNS(NS,"g");
+  rg.dataset.code="";
+  rg.setAttribute("class","root-node");
+  const stem=document.createElementNS(NS,"path");
+  stem.setAttribute("d",`M ${root.x} ${root.y+26} V ${root.y-28}`);
+  stem.setAttribute("class","root-mark");
+  const tri=document.createElementNS(NS,"path");
+  tri.setAttribute("d",`M ${root.x-28} ${root.y-28} L ${root.x+28} ${root.y-28} L ${root.x} ${root.y+4} Z`);
+  tri.setAttribute("class","root-mark");
+  rg.append(stem,tri);
+  svg.appendChild(rg);
+
+  for(const [code,n] of Object.entries(NODES)){
+    if(code==="") continue;
+    const g=document.createElementNS(NS,"g");
+    g.setAttribute("class","node");
+    g.dataset.code=code;
+
+    let shape;
+    if(n.t==="dot"){
+      shape=document.createElementNS(NS,"circle");
+      shape.setAttribute("cx",n.x); shape.setAttribute("cy",n.y); shape.setAttribute("r",22);
+      shape.setAttribute("class","dot-shape");
+    }else{
+      shape=document.createElementNS(NS,"rect");
+      shape.setAttribute("x",n.x-27); shape.setAttribute("y",n.y-19);
+      shape.setAttribute("width",54); shape.setAttribute("height",38); shape.setAttribute("rx",2);
+      shape.setAttribute("class","dash-shape");
+    }
+    const text=document.createElementNS(NS,"text");
+    text.setAttribute("x",n.lx); text.setAttribute("y",n.ly);
+    text.setAttribute("text-anchor","middle");
+    text.textContent=MORSE[code];
+
+    g.append(shape,text);
+    svg.appendChild(g);
+  }
+}
+
+async function tone(symbol){
+  try{
+    if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+    if(audioCtx.state==="suspended") await audioCtx.resume();
+
+    const now=audioCtx.currentTime;
+    const duration=symbol==="." ? 0.12 : 0.36;
+    const osc=audioCtx.createOscillator();
+    const gain=audioCtx.createGain();
+    osc.type="sine";
+    osc.frequency.setValueAtTime(700,now);
+    gain.gain.setValueAtTime(0.0001,now);
+    gain.gain.exponentialRampToValueAtTime(0.28,now+0.008);
+    gain.gain.setValueAtTime(0.28,now+Math.max(0.015,duration-0.018));
+    gain.gain.exponentialRampToValueAtTime(0.0001,now+duration);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(now);
+    osc.stop(now+duration+0.02);
+  }catch(e){}
+}
+
+function restartTimer(){
+  clearTimeout(resetTimer);
+  if(autoPlaying) return;
+  if(sequence){
+    resetTimer=setTimeout(()=>{
+      sequence="";
+      update();
+    },1000);
+  }
+}
+
+function update(){
+  document.querySelectorAll(".node").forEach(el=>{
+    const code=el.dataset.code;
+    el.classList.toggle("active",!!sequence && sequence.startsWith(code));
+    el.classList.toggle("current",code===sequence);
+  });
+
+  document.querySelectorAll(".edge").forEach(el=>{
+    const to=el.dataset.to;
+    const active=!!sequence && sequence.startsWith(to);
+    el.classList.toggle("active",active);
+    el.classList.toggle("dash-active",active && to.endsWith("-"));
+  });
+
+  document.querySelectorAll(".root-mark").forEach(el=>{
+    el.classList.toggle("active",!!sequence);
+  });
+}
+
+function invalid(){
+  card.classList.remove("bad");
+  void card.offsetWidth;
+  card.classList.add("bad");
+}
+
+function input(symbol,button){
+  if(autoPlaying && button !== dotBtn && button !== dashBtn) return;
+  const next=sequence+symbol;
+  if(!(next in MORSE)){ invalid(); return; }
+
+  tone(symbol);
+  sequence=next;
+  button.classList.add("pressed");
+  setTimeout(()=>button.classList.remove("pressed"),120);
+  update();
+  restartTimer();
+}
+
+
+const LETTER_TO_MORSE = Object.fromEntries(
+  Object.entries(MORSE)
+    .filter(([code,letter]) => code && /^[A-Z]$/.test(letter))
+    .map(([code,letter]) => [letter,code])
+);
+
+function sleep(ms){
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function autoInputText(){
+  if(autoPlaying) return;
+
+  const letters = textInput.value
+    .toUpperCase()
+    .replace(/[^A-Z]/g,"")
+    .split("");
+
+  if(!letters.length) return;
+
+  autoPlaying = true;
+  autoBtn.disabled = true;
+  textInput.disabled = true;
+  clearTimeout(resetTimer);
+
+  try{
+    for(let li=0; li<letters.length; li++){
+      const code = LETTER_TO_MORSE[letters[li]];
+      if(!code) continue;
+
+      sequence = "";
+      update();
+      await sleep(180);
+
+      for(let si=0; si<code.length; si++){
+        const symbol = code[si];
+        input(symbol, symbol==="." ? dotBtn : dashBtn);
+
+        // 音が終わってから次の短点・長点へ進む
+        await sleep(symbol==="." ? 230 : 470);
+      }
+
+      // 完成した文字を少し見せてから次へ
+      await sleep(420);
+    }
+
+    // 最後の文字も通常どおり1秒後にリセット
+    autoPlaying = false;
+    restartTimer();
+  } finally {
+    autoPlaying = false;
+    autoBtn.disabled = false;
+    textInput.disabled = false;
+  }
+}
+
+autoBtn.addEventListener("click", autoInputText);
+textInput.addEventListener("keydown", e=>{
+  if(e.key==="Enter"){
+    e.preventDefault();
+    autoInputText();
+  }
+});
+
+dotBtn.addEventListener("click",()=>{ if(!autoPlaying) input(".",dotBtn); });
+dashBtn.addEventListener("click",()=>{ if(!autoPlaying) input("-",dashBtn); });
+
+
+window.addEventListener("keydown",e=>{
+  if(e.repeat || autoPlaying) return;
+  if(e.key==="."){e.preventDefault();input(".",dotBtn);}
+  else if(e.key==="-"){e.preventDefault();input("-",dashBtn);}
+});
+
+draw();
+update();
+</script>
+</body>
+</html>
