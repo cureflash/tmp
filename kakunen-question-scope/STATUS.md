@@ -1,18 +1,13 @@
 # STATUS
 
-5ワーカーの進捗共有用。各ワーカーは実行開始時に必ず最新状態を読み、完了後に自分の行だけ更新する。
+5ワーカーの進捗索引。競合防止のため、各ワーカーは自分専用の `status/worker-N.md` のみ更新する。
 
-| Worker | 担当 | 次のtopic_id | 完了済み |
-|---|---|---|---|
-| 1 | LAW + RADL | LAW-01 | なし |
-| 2 | NUC + RNUC | NUC-01 | なし |
-| 3 | MAT + CYC | MAT-01 | なし |
-| 4 | SAF + ACC | SAF-01 | なし |
-| 5 | DET + WST + CAL/DES | DET-01 | なし |
+| Worker | 担当 | 状態ファイル |
+|---|---|---|
+| 1 | LAW + RADL | status/worker-1.md |
+| 2 | NUC + RNUC | status/worker-2.md |
+| 3 | MAT + CYC | status/worker-3.md |
+| 4 | SAF + ACC | status/worker-4.md |
+| 5 | DET + WST + CAL/DES | status/worker-5.md |
 
-## 成果物方針
-- 作問結果は `kakunen-question-scope/questions/<topic_id>.md` に保存する。
-- 1ファイルは1 topic_id。
-- 各問題に問題文、正答、解説、出典、検証状態を含める。
-- 一次資料で答えを確認できた問題のみ verified とする。
-- 同じtopic_idの既存ファイルがある場合は内容を読んで重複を避け、未完成なら続きから進める。
+作問結果は `questions/<topic_id>.md` に保存する。既存ファイルがある場合は必ず読み、重複を避けて続きから進める。
