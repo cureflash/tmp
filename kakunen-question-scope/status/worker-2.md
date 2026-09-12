@@ -2,6 +2,6 @@
 
 担当: NUC + RNUC
 
-- next_topic_id: NUC-01
-- completed: なし
-- current: 未着手
+- next_topic_id: NUC-02
+- completed: NUC-01
+- current: NUC-01 完了（26問、全問 verified）
