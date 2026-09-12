@@ -2,6 +2,6 @@
 
 担当: SAF + ACC
 
-- next_topic_id: SAF-01
-- completed: なし
+- next_topic_id: SAF-02
+- completed: SAF-01
 - current: 未着手
