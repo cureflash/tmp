@@ -2,6 +2,6 @@
 
 担当: MAT + CYC
 
-- next_topic_id: MAT-02
-- completed: MAT-01
-- current: MAT-01 完了
+- next_topic_id: MAT-03
+- completed: MAT-01, MAT-02
+- current: MAT-02 完了（36問、36/36 verified、4択）
