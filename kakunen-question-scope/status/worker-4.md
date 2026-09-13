@@ -2,6 +2,6 @@
 
 担当: SAF + ACC
 
-- next_topic_id: ACC-03
-- completed: SAF-01, SAF-02, SAF-03, SAF-04, SAF-05, SAF-06, SAF-07, SAF-08, SAF-09, SAF-10, SAF-11, ACC-01, ACC-02
-- current: ACC-02 完了（24問、24/24 verified、正答位置 A/B/C/D 各6問）
+- next_topic_id: ACC-04
+- completed: SAF-01, SAF-02, SAF-03, SAF-04, SAF-05, SAF-06, SAF-07, SAF-08, SAF-09, SAF-10, SAF-11, ACC-01, ACC-02, ACC-03
+- current: ACC-03 完了（24問、24/24 verified、正答位置 A/B/C/D 各6問）
